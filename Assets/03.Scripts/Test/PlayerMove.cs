@@ -23,14 +23,15 @@ public class PlayerMove : MonoBehaviour
     {
         if (!_isMoving) return;
         
-        var targetPoint = _path[_curPointIndex];
+        var point = _path[_curPointIndex];
+        var targetPoint = new Vector3(point.x, 0f, point.y);
         
         transform.position = Vector3.MoveTowards(
             transform.position, 
-            new Vector3(targetPoint.x, 0, targetPoint.y), 
+            targetPoint,
             MoveSpeed * Time.deltaTime);
         
-        if (((Vector2)transform.position - targetPoint).sqrMagnitude < 0.1f)
+        if ((transform.position - targetPoint).sqrMagnitude < 0.1f)
         {
             _curPointIndex++;
             if (_curPointIndex == _path.Count)
@@ -42,8 +43,21 @@ public class PlayerMove : MonoBehaviour
     public void MoveToTarget()
     {
         _target = Target;
-        _path = Nav.GetPath(transform.position, _target);
+        var curPos = new Vector2(transform.position.x, transform.position.z);
+        _path = Nav.GetPath(curPos, _target);
         _curPointIndex = 0;
         _isMoving = true;
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (!_isMoving) return;
+        Gizmos.color = Color.red;
+        for (int i = 0; i < _path.Count - 1; i++)
+        {
+            var p0 = _path[i];
+            var p1 = _path[i + 1];
+            Gizmos.DrawLine(new Vector3(p0.x, 0, p0.y), new Vector3(p1.x, 0, p1.y));
+        }
     }
 }

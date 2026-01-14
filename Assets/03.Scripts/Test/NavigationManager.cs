@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using _03.Scripts.Test;
 using UnityEngine;
 using Navigation.Net;
 using TriangleNet.Geometry;
@@ -21,8 +22,15 @@ public class NavigationManager : MonoBehaviour
         surface.Add(new Point(15, 15));
         surface.Add(new Point(15, -15));
         _navMesh.AddSurface(surface);
-        _navMesh.BuildNavMesh();
+
+        var obstacle1 = new Obstacle(new Vector2(5, 4), new Vector2(4, 2), 60.0f);
+        _navMesh.AddObstacle(obstacle1.Vertices);
+        var obstacle2 = new Obstacle(new Vector2(-3, -8), new Vector2(4, 2), 0.0f);
+        _navMesh.AddObstacle(obstacle2.Vertices);
+        var obstacle3 = new Obstacle(new Vector2(0, 10), new Vector2(4, 2), -30.0f);
+        _navMesh.AddObstacle(obstacle3.Vertices);
         
+        _navMesh.BuildNavMesh();
         CalculateGizmos(_navMesh);
     }
 

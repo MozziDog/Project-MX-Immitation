@@ -148,6 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3a70d333e20d3445aa6d7a31c5ebdac, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NavigationManager
+  drawGizmos: 1
 --- !u!4 &169438954
 Transform:
   m_ObjectHideFlags: 0
