@@ -81,12 +81,15 @@ namespace Logic
             
             // battleData에 기록된 캐릭터들을 스폰
             // 아군
-            for(int i=0; i<battleData.Characters.Count; i++)
-                SpawnCharacter( 
-                    battleData.Characters[i], 
-                    battleData.CharacterStats[i], 
-                    SpawnPoint[i] 
-                );
+            for (int i = 0; i < battleData.Characters.Count; i++)
+            {
+                if (battleData.Characters[i] != null) 
+                    SpawnCharacter( 
+                        battleData.Characters[i], 
+                        battleData.CharacterStats[i], 
+                        SpawnPoint[i] 
+                    );
+            }
 
             // 첫번째 웨이브 스폰
             CurWave = 0;

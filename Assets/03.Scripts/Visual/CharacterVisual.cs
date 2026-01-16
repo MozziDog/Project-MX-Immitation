@@ -61,9 +61,7 @@ namespace Visual
         void OnReloaded()
         {
             // _damageNumberPrefab.Spawn(transform.position, "Reloaded");
-            // 총구 아래로
-            if(gun)
-                gun.transform.rotation = Quaternion.Euler(60, 0, 0);
+
         }
 
         void OnShoulder()
@@ -77,7 +75,9 @@ namespace Visual
         void OnUnshoulder()
         {
             // _damageNumberPrefab.Spawn(transform.position, "Unshouldered Weapon");
-        
+            // 총구 아래로
+            if(gun)
+                gun.transform.rotation = Quaternion.Euler(60, 0, 0);
         }
 
         void DisplayDamageNumber(int damage, bool isCritical, AttackType attackType, ArmorType armorType)

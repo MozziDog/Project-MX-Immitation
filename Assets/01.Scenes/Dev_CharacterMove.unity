@@ -1974,10 +1974,14 @@ MonoBehaviour:
   BattleData:
     Characters:
     - {fileID: 11400000, guid: 94c38104aa68c644c9dad1a02788c49d, type: 2}
+    - {fileID: 0}
     - {fileID: 11400000, guid: aa1662e18c4216342ab169716724ad97, type: 2}
+    - {fileID: 0}
     CharacterStats:
     - {fileID: 11400000, guid: 2a5c8a7d1c2dea84d87db0a302581295, type: 2}
+    - {fileID: 0}
     - {fileID: 11400000, guid: 0f08f87bdf7f90a45973a4d10dba3983, type: 2}
+    - {fileID: 0}
     EnemyWaves:
     - Enemies:
       - {fileID: 11400000, guid: 94c38104aa68c644c9dad1a02788c49d, type: 2}
@@ -2002,21 +2006,14 @@ MonoBehaviour:
       MaxHp: 0
       Width: 2
       Length: 1
-    - Id: 0
-      MaxHp: 0
-      Width: 2
-      Length: 1
     ObstaclePosition:
     - x: 1
       y: 14
     - x: -1.8
       y: 29.5
-    - x: 1.8
-      y: 29.5
     ObstacleRotation:
     - 0
     - 15
-    - -15
   CharacterViewDatabase: {fileID: 11400000, guid: 272b3fa63853d8d43a0f58bd4df3abe2, type: 2}
   EnemyPrefab: {fileID: 2126815407644387395, guid: 90f25b77c0b56784c986d0228507137f, type: 3}
   ObstaclePrefab: {fileID: 3613835360911017022, guid: adee56418d5ae2e478366ab6c449ade6, type: 3}

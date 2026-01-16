@@ -17,10 +17,10 @@ MonoBehaviour:
   NormalSkillCondition:
     ConditionType: 1
     Argument: 210
-  SkillRange:
-    ConditionType: 3
-    SkillRangeType: 0
-    Argument1: 1
+  TargetAreaSize:
+    TargetType: 1
+    Shape: 0
+    Argument1: 0
     Argument2: 0
   Range: 0
   StartupFrame: 30

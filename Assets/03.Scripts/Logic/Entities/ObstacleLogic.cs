@@ -80,8 +80,8 @@ namespace Logic
 
             var linkLocal = new Position2[]
             {
-                new Position2(0, -halfHeight),
-                new Position2(0, halfHeight)
+                new Position2(0, -halfHeight - 0.1f),
+                new Position2(0, halfHeight + 0.1f)
             };
             
             var linkWorld = new Position2[2];
