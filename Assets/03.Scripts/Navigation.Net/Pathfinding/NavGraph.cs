@@ -6,26 +6,25 @@ namespace Navigation.Net.Pathfinding
 {
     public class NavGraph
     {
-        private List<NavNode> _nodes = new();
-        private List<Polygon> _polygons;
+        private List<INavNode> _nodes = new();
     
-        public List<NavNode> Nodes => _nodes;
+        public List<INavNode> Nodes => _nodes;
 
-        public NavNode AddNode(Polygon polygon)
+        public ConvexNode AddConvexNode(Polygon polygon)
         {
-            var node = new NavNode(polygon);
+            var node = new ConvexNode(polygon);
             _nodes.Add(node);
             return node;
         }
 
-        public bool AddConnection(Point point1, Point point2)
+        public LinkNode AddLinkNode(Vertex point, double cost)
         {
-            var node1 = _nodes.Find((x) => x.Point == point1);
-            var node2 = _nodes.Find((x) => x.Point == point2);
-            return AddConnection(node1, node2);
+            var node = new LinkNode(point, cost);
+            _nodes.Add(node);
+            return node;
         }
 
-        public bool AddConnection(NavNode node1, NavNode node2)
+        public bool AddConnection(INavNode node1, INavNode node2)
         {
             if (node1 == null || node2 == null)
                 throw new NullReferenceException("[NavGraph] One or All of nodes to connect is null");
@@ -38,15 +37,15 @@ namespace Navigation.Net.Pathfinding
             return true;
         }
 
-        public NavNode? GetNodeOfArea(Point point)
+        public ConvexNode? GetNodeOfArea(Point point)
         {
             if(_nodes == null || _nodes.Count == 0)
                 throw new Exception("[NavGraph] Cannot find nearest node in empty NavGarph");
 
             foreach (var node in _nodes)
             {
-                if (node.IsBoundaryContains(point))
-                    return node;
+                if(node is ConvexNode convexNode && convexNode.IsBoundaryContains(point))
+                    return convexNode;
             }
         
             return null;

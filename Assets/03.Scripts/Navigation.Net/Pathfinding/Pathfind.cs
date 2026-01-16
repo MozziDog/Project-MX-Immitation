@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Navigation.Net.Math;
 using Navigation.Net.Pathfinding;
 using TriangleNet.Geometry;
@@ -8,12 +9,12 @@ namespace Navigation.Net
 {
     public class Pathfind
     {
-        public static List<Point> Run(Point src, Point dst, NavMesh navMesh)
+        public static (List<Point>, List<bool>) Run(Point src, Point dst, NavMesh navMesh)
         {
-            return Run(src, dst, navMesh.NavGraph);
+            return Run(src, dst, navMesh.Graph);
         }
-    
-        public static List<Point> Run(Point src, Point dst, NavGraph graph)
+        
+        private static (List<Point>, List<bool>) Run(Point src, Point dst, NavGraph graph)
         {
             var firstNode = graph.GetNodeOfArea(src);
             var lastNode = graph.GetNodeOfArea(dst);
@@ -21,7 +22,7 @@ namespace Navigation.Net
             if (firstNode == null || lastNode == null)
             {
                 Console.WriteLine("src or/and dst is out of NavMesh");
-                return null;
+                return (null, null);
             }
         
             var path = AStar(firstNode, lastNode, graph);
@@ -30,14 +31,14 @@ namespace Navigation.Net
             return stringPulled;
         }
 
-        private static List<NavNode> AStar(NavNode start, NavNode end, NavGraph graph)
+        private static List<INavNode> AStar(INavNode start, INavNode end, NavGraph graph)
         {
-            if(start == end)
-                return new List<NavNode>();
+            if (start == end)
+                return new List<INavNode>();
             
-            PriorityQueue<NavNode, double> pq = new();
-            HashSet<NavNode> visited = new();
-            Dictionary<NavNode, NavNode> parent = new();
+            PriorityQueue<INavNode, double> pq = new();
+            HashSet<INavNode> visited = new();
+            Dictionary<INavNode, INavNode> parent = new();
         
             pq.Enqueue(start, 0);
 
@@ -53,8 +54,26 @@ namespace Navigation.Net
                 {
                     if (visited.Contains(next))
                         continue;
+
+                    // Skip if link is disabled
+                    if (next is LinkNode linkNode && !linkNode.Enabled)
+                        continue;
                 
-                    var g = Distance(cur, next);
+                    double g;
+                    
+                    // Use Cost of link if cur and next are 2 points of NavLink
+                    if (cur is LinkNode link1
+                        && next is LinkNode link2
+                        && LinkNode.isPair(link1, link2))
+                    {
+                        g = link1.Cost;
+                    }
+                    // or use distance
+                    else
+                    {
+                        g = Distance(cur, next);
+                    }
+
                     var h = Distance(next, end);
                     pq.Enqueue(next, g + h);
                     visited.Add(next);
@@ -66,7 +85,7 @@ namespace Navigation.Net
             if (!visited.Contains(end))
                 return null;
 
-            var ret = new List<NavNode>();
+            var ret = new List<INavNode>();
             var n = end;
             while (n != start)
             {
@@ -79,13 +98,66 @@ namespace Navigation.Net
             return ret;
         }
 
-        private static List<Point> StringPull(Point start, Point end, List<NavNode> nodes)
+        private static (List<Point>, List<bool>) StringPull(Point start, Point end, List<INavNode> nodes)
+        {
+            var path = new List<Point>();
+            var isNavLinkStart = new List<bool>();
+
+            path.Add(start);
+            isNavLinkStart.Add(false);
+            
+            var curStart = start;
+            var curEnd = end;
+            int i = 0;
+            while (i < nodes.Count)
+            {
+                // Use string-pull if elements of sublist is ConvexNode 
+                var subList = new List<INavNode>();
+                for (; i < nodes.Count; i++)
+                {
+                    if (nodes[i] is LinkNode linkNode)
+                    {
+                        curEnd = linkNode.Point;
+                        break;
+                    }
+                    subList.Add(nodes[i]);
+                }
+                var subPath = StringPullInternal(curStart, curEnd, subList);
+                // Trim first and last point of sub path
+                subPath.RemoveAt(0);
+                subPath.RemoveAt(subPath.Count - 1);
+                path.AddRange(subPath);
+                isNavLinkStart.AddRange(Enumerable.Repeat(false, subPath.Count));
+                
+                // Add NavLink points directly to path
+                for (; i < nodes.Count; i++)
+                {
+                    if (nodes[i] is not LinkNode) break;
+                    path.Add(nodes[i].Point);
+                    if(i < nodes.Count - 1 && nodes[i+1] is LinkNode)
+                        isNavLinkStart.Add(true);
+                    else
+                        isNavLinkStart.Add(false);
+                }
+                
+                // Skip Next node of NavLink
+                // It's just for connecting links to graph
+                i++;
+            }
+            
+            path.Add(end);
+            isNavLinkStart.Add(false);
+            return (path, isNavLinkStart);
+        }
+
+        private static List<Point> StringPullInternal(Point start, Point end, List<INavNode> nodes)
         {
             // Get portals
             var portals = new List<ISegment>();
             for (int i = 0; i < nodes.Count-1; i++)
             {
-                var p = HertelMehlhorn.GetSharedEdge(nodes[i].Boundary, nodes[i + 1].Boundary);
+                var p = HertelMehlhorn.GetSharedEdge( (nodes[i] as ConvexNode).Boundary, 
+                                                                (nodes[i + 1] as ConvexNode).Boundary);
                 if (p == null)
                     throw new Exception("[Pathfind] Cannot find shared edge from neighboring polygons");
             
@@ -166,7 +238,7 @@ namespace Navigation.Net
             return path;
         }
 
-        private static double Distance(NavNode a, NavNode b)
+        private static double Distance(INavNode a, INavNode b)
         {
             var dx = a.Point.x - b.Point.x;
             var dy = a.Point.y - b.Point.y;

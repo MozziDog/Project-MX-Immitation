@@ -4,14 +4,14 @@ using _03.Scripts.Test;
 using UnityEngine;
 using Navigation.Net;
 using TriangleNet.Geometry;
-using Unity.VisualScripting;
 
 public class NavigationManager : MonoBehaviour
 {
     [SerializeField] private bool drawGizmos = false;
     
     private NavMesh _navMesh = new();
-    private List<Mesh> meshForGizmos = new();
+    private List<Mesh> _navMeshConvexes = new();
+    private List<(Vector3, Vector3)> _navMeshLinks = new();
         
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -25,10 +25,15 @@ public class NavigationManager : MonoBehaviour
 
         var obstacle1 = new Obstacle(new Vector2(5, 4), new Vector2(4, 2), 60.0f);
         _navMesh.AddObstacle(obstacle1.Vertices);
+        _navMesh.AddLink(obstacle1.Link[0], obstacle1.Link[1], 3f);
+        
         var obstacle2 = new Obstacle(new Vector2(-3, -8), new Vector2(4, 2), 0.0f);
         _navMesh.AddObstacle(obstacle2.Vertices);
+        _navMesh.AddLink(obstacle2.Link[0], obstacle2.Link[1], 3f);
+        
         var obstacle3 = new Obstacle(new Vector2(0, 10), new Vector2(4, 2), -30.0f);
         _navMesh.AddObstacle(obstacle3.Vertices);
+        _navMesh.AddLink(obstacle3.Link[0], obstacle3.Link[1], 3f);
         
         _navMesh.BuildNavMesh();
         CalculateGizmos(_navMesh);
@@ -36,7 +41,7 @@ public class NavigationManager : MonoBehaviour
 
     public List<Vector2> GetPath(Vector2 start, Vector2 end)
     {
-        var pointList = Pathfind.Run(ToPoint(start), ToPoint(end), _navMesh);
+        (var pointList, _) = Pathfind.Run(ToPoint(start), ToPoint(end), _navMesh);
         
         var vectorList = new List<Vector2>();
         foreach (var point in pointList)
@@ -62,7 +67,7 @@ public class NavigationManager : MonoBehaviour
 
     private void CalculateGizmos(NavMesh navMesh)
     {
-        meshForGizmos.Clear();
+        _navMeshConvexes.Clear();
         foreach (var poly in navMesh.MergedPolygons)
         {
             int count = poly.Count;
@@ -91,7 +96,16 @@ public class NavigationManager : MonoBehaviour
             mesh.vertices = vertices;
             mesh.triangles = triangles;
             mesh.normals = normals;
-            meshForGizmos.Add(mesh);
+            _navMeshConvexes.Add(mesh);
+        }
+        
+        _navMeshLinks.Clear();
+        foreach (var link in navMesh.Links)
+        {
+            (var src, var dst, _, _) = link;
+            Vector3 v0 = ToVector3(src);
+            Vector3 v1 = ToVector3(dst);
+            _navMeshLinks.Add((v0, v1));
         }
     }
 
@@ -100,9 +114,15 @@ public class NavigationManager : MonoBehaviour
         if (!drawGizmos) return;
         
         Gizmos.color = Color.blue;
-        foreach (var mesh in meshForGizmos)
+        foreach (var mesh in _navMeshConvexes)
         {
             Gizmos.DrawWireMesh(mesh, Vector3.up * 0.1f);
+        }
+
+        Gizmos.color = Color.green;
+        foreach ((var src, var dst) in _navMeshLinks)
+        {
+            Gizmos.DrawLine(src, dst);
         }
     }
 }

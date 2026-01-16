@@ -7,41 +7,85 @@ namespace Navigation.Net
 {
     public class NavMesh
     {
-        private Polygon _input;
+        private Polygon _inputMesh;
         private List<Polygon> _mergedPolygons;
-        private NavGraph _navGraph;
+        private List<(Vertex, Vertex, double, double)> _links;
+        private NavGraph _graph;
     
-        internal Polygon Input => _input;
+        internal Polygon InputMesh => _inputMesh;
         internal List<Polygon> MergedPolygons => _mergedPolygons;
-        internal NavGraph NavGraph
+        internal List<(Vertex, Vertex, double, double)> Links => _links;
+        internal NavGraph Graph
         {
             get
             {
-                if(_navGraph == null)
+                if(_graph == null)
                     BuildNavMesh();
-                return _navGraph;
+                return _graph;
             }
         }
 
         public NavMesh()
         {
-            _input = new Polygon();
+            _inputMesh = new Polygon();
             _mergedPolygons = new List<Polygon>();
-            _navGraph = new NavGraph();
+            _graph = new NavGraph();
+            _links = new List<(Vertex, Vertex, double, double)>();
         }
     
         /// Add walkable area to NavMesh. points must be sorted CCW
         public void AddSurface(List<Point> points)
         {
-            _input.Add(PointsToContour(points));
+            _inputMesh.Add(PointsToContour(points));
         }
 
         /// Add obstacle to NavMesh. points must be sorted CCW
         public void AddObstacle(List<Point> points)
         {
-            _input.Add(PointsToContour(points), hole: true);
+            _inputMesh.Add(PointsToContour(points), hole: true);
         }
 
+        /// Add 2-way link to NavMesh 
+        public void AddLink(Point src, Point dst, double cost)
+        {
+            _links.Add( (new Vertex(src.X, src.Y), new Vertex(dst.X, dst.Y), cost, cost) );
+
+        }
+        
+        /// Add asymmetry link to NavMesh
+        public void AddLink(Point src, Point dst, double costFromSrc, double costFromDst)
+        {
+            _links.Add( (new Vertex(src.X, src.Y), new Vertex(dst.X, dst.Y), costFromSrc, costFromDst) );
+        }
+        
+        /// Add 1-way link to NavMesh
+        public void AddOneWayLink(Point src, Point dst, double cost)
+        {
+            _links.Add( (new Vertex(src.X, src.Y), new Vertex(dst.X, dst.Y), cost, double.PositiveInfinity) );
+        }
+
+        public void SetLinkEnable(Point src, bool enable)
+        {
+            var node = _graph.Nodes.Find(x => { return x.Point == src; });
+            if (node is LinkNode linkNode)
+                SetLinkEnable(linkNode, enable);
+        }
+
+        public void SetLinkEnable(LinkNode linkNode, bool enable)
+        {
+            linkNode.Enabled = enable;
+            linkNode.Pair.Enabled = enable;
+        }
+        
+        public void BuildNavMesh()
+        {
+            var quality = new QualityOptions() { MaximumAngle = 90.0 };
+            var mesh = _inputMesh.Triangulate(quality);
+            _mergedPolygons = HertelMehlhorn.Run(mesh);
+        
+            _graph = GraphBuilder.BuildNavGraph(_mergedPolygons, _links);
+        }
+        
         private Contour PointsToContour(List<Point> points)
         {
             var vertices = new List<Vertex>();
@@ -50,16 +94,6 @@ namespace Navigation.Net
                 vertices.Add(new Vertex(point.X, point.Y));
             }
             return new Contour(vertices, 0);
-        }
-
-        public void BuildNavMesh()
-        {
-            var quality = new QualityOptions() { MaximumAngle = 90.0 };
-            var mesh = _input.Triangulate(quality);
-        
-            _mergedPolygons = HertelMehlhorn.Run(mesh);
-        
-            _navGraph = GraphBuilder.BuildNavGraph(_mergedPolygons);
         }
     }
 }
