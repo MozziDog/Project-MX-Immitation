@@ -1,7 +1,5 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Sirenix.OdinInspector;
 using System.Linq;
 using System;
 using Logic.Pathfind;
@@ -19,18 +17,15 @@ namespace Logic
         };
         public readonly int ExCostGaugePerCount = 100000;     // 코스트 갯수 1개를 증가시키기 위해 필요한 충전량.
 
-        [Title("전투 초기화 정보")]
         public BattleData BattleData;
-        public CharacterPrefabDatabase CharacterViewDatabase;
-        public GameObject EnemyPrefab;
-        public GameObject BulletPrefab;
-        public GameObject PathFinderPrefab;
 
-        [Title("전투 씬 상태")]
+        // 전투 씬 상태
         public int BaseLogicTickrate = 30;
         public BattleSceneState BattleState;
+        public int LeftAllyStriker;
+        public int LeftEnemyStriker;
 
-        [Title("관리중인 엔티티들(로직)")]
+        // 관리중인 엔티티들(로직)
         public CharacterGroup CharactersLogic = new CharacterGroup();      // 아군
         public CharacterGroup EnemiesLogic = new CharacterGroup();          // 적군
         public List<ObstacleLogic> ObstaclesLogic = new List<ObstacleLogic>();
@@ -42,17 +37,17 @@ namespace Logic
         List<ObstacleLogic> _obstaclesToRemove = new List<ObstacleLogic>();
         List<BulletLogic> _bulletsToRemove = new List<BulletLogic>();
 
-        [Title("EX 스킬 관련")]
+        // EX 스킬 관련
         public int ExCostCount = 0;         // 현재 코스트 갯수. Ex 스킬 사용에 필요.
         public int ExCostRecharging = 0;    // 현재 코스트 충전량. 이 값이 최대치가 되면 ExCostCount가 1 증가.
         public int ExCostRegen = 0;         // 틱 당 코스트 회복량. 캐릭터 코스트 회복량의 총합.
         public List<CharacterLogic> skillCardHand = new List<CharacterLogic>();       // 패. 최대 3장
         public LinkedList<CharacterLogic> skillCardDeck = new LinkedList<CharacterLogic>(); // 덱. 패에 들고 있지 않은 모든 스킬카드.
 
-        [Title("카메라 관리")]
-        CameraTargetGroupControl cameraTargetGroup;
-
-        // 전투 중 발생하는 이벤트들
+        // 길찾기 담당
+        public NavigationSystem NavigationSystem;
+        
+        // 전투 이벤트들
         public Action OnBattleBegin;
         public delegate void CharacterInstanceEvent(CharacterLogic characterLogic);
         public CharacterInstanceEvent OnAllySpawn;
@@ -66,8 +61,6 @@ namespace Logic
         public ObstacleInstacneEvent OnObstacleSpawned;
         public ObstacleInstacneEvent OnObstacleDestroyed;
         
-        // 길찾기 담당
-        public NavigationSystem NavigationSystem;
 
         public void Init(BattleData battleData)
         {
@@ -95,6 +88,7 @@ namespace Logic
                 );
 
             // 적군
+            LeftEnemyStriker = battleData.Enemies.Count;
             for(int i=0; i<battleData.Enemies.Count; i++)
                 SpawnEnemy( 
                     battleData.Enemies[i], 
@@ -104,38 +98,28 @@ namespace Logic
 
             // 코스트 회복량 산정
             foreach(var character in CharactersLogic)
-            {
                 ExCostRegen += character.CostRegen;
-            }
 
             // 스킬카드 덱 구성 & 최대 3장 드로우
             foreach(int i in Enumerable.Range(0, CharactersLogic.Count).OrderBy(x => UnityEngine.Random.Range(0,1)))
-            {
                 skillCardDeck.AddLast(CharactersLogic[i]);
-            }
+            
             int numberToDraw = Mathf.Min(skillCardDeck.Count, 3);
             for (int i=0; i< numberToDraw; i++)
-            {
                 DrawSkillCard();
-            }
+            
+            // 이벤트 구독
             OnAllyDie += RemoveSkillCardFromDeck;
+            OnAllyDie += UpdateExCostRegen;
+            OnAllyDie += CheckGameLose;
+            OnEnemyDie += CheckGameWin;
 
             // 초기화 완료 후, 게임 루프 시작 전에 이벤트 호출
-            if (OnBattleBegin != null)
-            {
-                OnBattleBegin();
-            }
+            OnBattleBegin?.Invoke();
         }
 
         public void Tick()
         {
-            // 게임 오버 조건 체크
-            if(CharactersLogic.Count <= 0)
-            {
-                BattleState = BattleSceneState.lose;
-                return;
-            }
-
             // 코스트 회복
             if(ExCostCount < 10)
             {
@@ -165,7 +149,8 @@ namespace Logic
             // 삭제해야할 엔티티 정리
             RemoveInactiveEntities();
         }
-
+        
+        /// 다음 웨이브로 넘어가기 전에 아군 행동 기다리기
         public bool GetIfSomeAllyDoingAction()
         {
             bool answer = false;
@@ -176,13 +161,13 @@ namespace Logic
             return answer;
         }
 
-        void DrawSkillCard()
+        private void DrawSkillCard()
         {
             skillCardHand.Add(skillCardDeck.First.Value);
             skillCardDeck.RemoveFirst();
         }
 
-        void RemoveSkillCardFromDeck(CharacterLogic toRemove)
+        private void RemoveSkillCardFromDeck(CharacterLogic toRemove)
         {
             // 삭제할 카드가 패에 있다면, 삭제하고 (가능하다면) 드로우
             if(skillCardHand.Remove(toRemove))
@@ -229,7 +214,7 @@ namespace Logic
             return;
         }
 
-        public CharacterLogic SpawnCharacter(CharacterData characterData, 
+        private CharacterLogic SpawnCharacter(CharacterData characterData, 
                                     CharacterStatData characterStat, Position2 spawnPos)
         {
             CharacterLogic newCharacter = new CharacterLogic(this, characterData, characterStat);
@@ -240,7 +225,7 @@ namespace Logic
             return newCharacter;
         }
 
-        public CharacterLogic SpawnEnemy(CharacterData enemyData, 
+        private CharacterLogic SpawnEnemy(CharacterData enemyData, 
                                     CharacterStatData enemyStat, Position2 spawnPos)
         {
             CharacterLogic newEnemy = new CharacterLogic(this, enemyData, enemyStat);
@@ -251,7 +236,7 @@ namespace Logic
             return newEnemy;
         }
 
-        public ObstacleLogic SpawnObstacle(ObstacleData obstacleData, 
+        private ObstacleLogic SpawnObstacle(ObstacleData obstacleData, 
                                     Position2 position, float rotationDeg)
         {
             ObstacleLogic newObstacle = new ObstacleLogic(obstacleData, position, rotationDeg);
@@ -271,11 +256,20 @@ namespace Logic
             
             OnBulletSpawned?.Invoke(bullet);
         }
+        
+        /// 총알 수명 다했을 때 없애기
+        public void RemoveExpiredBullet(BulletLogic expiredBullet)
+        {
+            _bulletsToRemove.Add(expiredBullet);
+            if(OnBulletExpired != null)
+            {
+                OnBulletExpired(expiredBullet);
+            }
+        }
 
-        /// <summary>
-        /// Tick 안의 루프에서 엔티티가 삭제/추가되면 안되므로 삭제해야 할 엔티티들은 Tick 후에 따로 삭제
-        /// </summary>
-        void RemoveInactiveEntities()
+        // Tick 안의 루프에서 엔티티가 삭제/추가되면 안되므로
+        // 삭제해야 할 엔티티들은 모아뒀다가 Tick 사이에 처리
+        private void RemoveInactiveEntities()
         {
             if (_charactersToRemove.Count > 0)
             {
@@ -303,41 +297,40 @@ namespace Logic
             }
         }
 
-        /// <summary>
         /// 아군 적군 상관없이 임의의 캐릭터 사망 시 이벤트
-        /// </summary>
         public void RemoveDeadCharacter(CharacterLogic deadCharacter)
         {
             // 아군일 경우
             if(CharactersLogic.Contains(deadCharacter))
             {
-                if (OnAllyDie != null)
-                {
-                    OnAllyDie(deadCharacter);
-                }
+                OnAllyDie?.Invoke(deadCharacter);
                 _charactersToRemove.Add(deadCharacter);
             }
             // 적군일 경우
             else if(EnemiesLogic.Contains(deadCharacter))
             {
-                if (OnEnemyDie != null)
-                {
-                    OnEnemyDie(deadCharacter);
-                }
+                OnEnemyDie?.Invoke(deadCharacter);
                 _enemiesToRemove.Add(deadCharacter);
             }
         }
 
-        /// <summary>
-        /// 총알 수명 다했을 때 없애기
-        /// </summary>
-        public void RemoveExpiredBullet(BulletLogic expiredBullet)
+        private void UpdateExCostRegen(CharacterLogic deadCharacter)
         {
-            _bulletsToRemove.Add(expiredBullet);
-            if(OnBulletExpired != null)
-            {
-                OnBulletExpired(expiredBullet);
-            }
+            ExCostRegen -= deadCharacter.CostRegen;
+        }
+
+        private void CheckGameLose(CharacterLogic deadCharacter)
+        {
+            LeftAllyStriker--;
+            if (LeftAllyStriker <= 0)
+                BattleState = BattleSceneState.lose;
+        }
+
+        private void CheckGameWin(CharacterLogic deadEnemy)
+        {
+            LeftEnemyStriker--;
+            if (LeftEnemyStriker <= 0)
+                BattleState = BattleSceneState.win;
         }
     }
 }

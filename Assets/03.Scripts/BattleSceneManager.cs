@@ -154,10 +154,20 @@ public class BattleSceneManager : MonoBehaviour
             BattleLogic.Tick();
             yield return new WaitForSeconds(1f / _logicTickPerSecond);
         }
-        Debug.Log("게임 오버");
-        if(OnBattleEnd != null)
+        
+        // 전투 종료
+        OnBattleEnd?.Invoke(BattleLogic);
+        switch (BattleLogic.BattleState)
         {
-            OnBattleEnd(BattleLogic);
+            case BattleSceneState.win:
+                Debug.Log("전투 승리");
+                break;
+            case BattleSceneState.lose:
+                Debug.Log("전투 패배");
+                break;
+            default:
+                Debug.LogError($"잘못된 전투 결과: {BattleLogic.BattleState}");
+                break;
         }
     }
 

@@ -7,6 +7,6 @@ public enum BattleSceneState
     Intro,
     InBattle,
     lose,
-    victory,
+    win,
     result
 }

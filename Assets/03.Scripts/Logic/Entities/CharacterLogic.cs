@@ -1,9 +1,5 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
 using AI;
-using Sirenix.OdinInspector;
 
 namespace Logic
 {
@@ -18,47 +14,47 @@ namespace Logic
         public ArmorType ArmorType;
 
         // 기본 스탯 정보
-        int _maxHP;
-        int _currentHP;
-        int _attackPower;
-        int _defensePower;
-        int _healPower;
-        int _costRegen;
+        private int _maxHP;
+        private int _currentHP;
+        private int _attackPower;
+        private int _defensePower;
+        private int _healPower;
+        private int _costRegen;
 
         // 엄폐 관련
-        ObstacleLogic _coveringObstacle;       // 현재 엄폐를 수행중인 엄폐물
-        private ObstacleLogic occupyinngObstacle;           // 현재 점유 중인 장애물
+        private ObstacleLogic _coveringObstacle;       // 현재 엄폐를 수행중인 엄폐물
+        private ObstacleLogic _occupyinngObstacle;           // 현재 점유 중인 장애물
 
         // 이동 & 위치 선정 관련
         private NavAgent _navAgent;
-        float _moveSpeed;
-        Position2 _position;
-        Position2 _moveDest;
-        Position2? _jumpEndPos;
-        ObstacleLogic _destObstacle;
-        float _attackRange;
-        float _distToEnemy = 10f;
-        bool _isObstacleJumping = false;
-        bool _isShouldering = false;
+        private float _moveSpeed;
+        private Position2 _position;
+        private Position2 _moveDest;
+        private Position2? _jumpEndPos;
+        private ObstacleLogic _destObstacle;
+        private float _attackRange;
+        private float _distToEnemy = 10f;
+        private bool _isObstacleJumping = false;
+        private bool _isShouldering = false;
 
         // 전투 관련
-        CharacterLogic _currentTarget;
-        int _maxAmmo;
-        int _curAmmo;
-        int _exSkillCost;
-        bool _exSkillTrigger;
-        IAutoSkillCheck _normalSkillCondition;
-        SkillData exSkill;
-        SkillData normalSkill;
+        private CharacterLogic _currentTarget;
+        private int _maxAmmo;
+        private int _curAmmo;
+        private int _exSkillCost;
+        private bool _exSkillTrigger;
+        private IAutoSkillCheck _normalSkillCondition;
+        private SkillData exSkill;
+        private SkillData normalSkill;
 
         // 프레임 카운트
-        int _curActionFrame = 0;        // 이곳저곳에서 범용으로 사용하는 프레임 카운터
-        int _attackFrame = 0;           // 기본공격 전용으로 사용하는 프레임 카운터
-        int _exSkillFrame = 0;          // EX 스킬 전용 프레임 카운터
+        private int _curActionFrame = 0;        // 이곳저곳에서 범용으로 사용하는 프레임 카운터
+        private int _attackFrame = 0;           // 기본공격 전용으로 사용하는 프레임 카운터
+        private int _exSkillFrame = 0;          // EX 스킬 전용 프레임 카운터
 
         // 그 외 참조
-        BattleLogic _battleLogic;
-        BehaviorTree _bt;
+        private BattleLogic _battleLogic;
+        private BehaviorTree _bt;
 
         // 상수값
         static readonly float SightRange = 13f;
@@ -412,7 +408,7 @@ namespace Logic
             {
                 LogicDebug.Log("장애물 극복 완료");
                 _isObstacleJumping = false;
-                occupyinngObstacle.isOccupied = false;
+                _occupyinngObstacle.isOccupied = false;
                 _jumpEndPos = null;
             }
         }
@@ -421,9 +417,9 @@ namespace Logic
         {
             _isObstacleJumping = true;
             // 뛰어넘는 중에는 다른 캐릭터가 엄폐물 뒤에서 기다리는 상황을 방지하기 위해 장애물 점유로 판정
-            occupyinngObstacle = FindNearbyObstacle();
-            occupyinngObstacle.isOccupied = true;
-            _jumpEndPos = occupyinngObstacle.GetFarCoveringPoint(_position);
+            _occupyinngObstacle = FindNearbyObstacle();
+            _occupyinngObstacle.isOccupied = true;
+            _jumpEndPos = _occupyinngObstacle.GetFarCoveringPoint(_position);
         }
 
         private ObstacleLogic FindNearbyObstacle()
@@ -644,10 +640,8 @@ namespace Logic
                 skillProjectile.ProjectileSpeed = 20f;
                 _battleLogic.AddBullet(skillProjectile);
 
-                if(OnUseExSkill != null)
-                {
-                    OnUseExSkill();
-                }
+                OnUseExSkill?.Invoke();
+                LogicDebug.Log($"{Name}: Ex 스킬 사용 시작");
             }
 
             // Action의 마지막 프레임
@@ -659,23 +653,15 @@ namespace Logic
                 _exSkillTrigger = false;
                 _currentTarget = null;       // 아군을 타겟팅한 경우 등을 고려, 스킬 종료 시 대상 재선정 필요
 
-                LogicDebug.Log("Ex 스킬 사용 종료");
+                LogicDebug.Log($"{Name}: Ex 스킬 사용 종료");
                 return BehaviorResult.Success;
             }
-            LogicDebug.Log("Ex 스킬 사용 중");
             return BehaviorResult.Running;
         }
 
         bool CheckCanUseNormalSkill()
         {
-            if (_normalSkillCondition.CanUseSkill())
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
+            return _normalSkillCondition.CanUseSkill();
         }
 
         BehaviorResult UseNormalSkill()
@@ -711,19 +697,17 @@ namespace Logic
                 skillProjectile.ProjectileSpeed = 20f;
                 _battleLogic.AddBullet(skillProjectile);
 
-                if(OnUseNormalSkill != null)
-                {
-                    OnUseNormalSkill();
-                }
-
                 _normalSkillCondition.ResetSkillCondition();
+                OnUseNormalSkill?.Invoke();
+
+                LogicDebug.Log($"{Name}: 기본 스킬 사용 시작");
             }
 
             if (_curActionFrame >= normalSkill.StartupFrame + normalSkill.RecoveryFrame)
             {
                 _curActionFrame = 0;
                 IsDoingSomeAction = false;
-                LogicDebug.Log("기본 스킬 사용 종료");
+                LogicDebug.Log($"{Name}: 기본 스킬 사용 종료");
                 return BehaviorResult.Success;
             }
             return BehaviorResult.Running;
@@ -760,7 +744,7 @@ namespace Logic
             }
         }
 
-        void Die()
+        private void Die()
         {
             // TODO: 후퇴 연출 필요
             isAlive = false;
@@ -774,10 +758,7 @@ namespace Logic
                 }
             }
 
-            if(OnDie != null)
-            {
-                OnDie();
-            }
+            OnDie?.Invoke();
             _battleLogic.RemoveDeadCharacter(this);
         }
 
