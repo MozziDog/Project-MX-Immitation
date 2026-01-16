@@ -35,6 +35,7 @@ public class ExSkillUI : MonoBehaviour
         for(i=0; i<_battleLogic.skillCardHand.Count; i++)
         {
             _skillCardSlot[i].SetSkillCard(_battleLogic.skillCardHand[i]);
+            _skillCardSlot[i].OnSkillCardSelected += _battleManager.OnClickSkillCard;
         }
         for(; i<3; i++)
         {
