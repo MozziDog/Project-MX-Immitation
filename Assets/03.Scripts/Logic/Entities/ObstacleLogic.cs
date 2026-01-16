@@ -41,7 +41,7 @@ namespace Logic
             }
         }
 
-        public void Init(ObstacleData data, Position2 position, float rotationDeg)
+        public ObstacleLogic(ObstacleData data, Position2 position, float rotationDeg)
         {
             _position = position;
             _scale = new Position2(data.Width, data.Length);

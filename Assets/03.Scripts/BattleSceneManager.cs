@@ -44,7 +44,7 @@ public class BattleSceneManager : MonoBehaviour
     {
         BattleLogic = new BattleLogic();
 
-        // 이벤트 등록
+        // Visual과 Logic 연동을 위한 이벤트 등록
         BattleLogic.OnAllySpawn += SpawnCharacterVisual;
         BattleLogic.OnAllyDie += DestroyCharacterVisual;
         BattleLogic.OnEnemySpawn += SpawnEnemyVisual;
@@ -54,7 +54,6 @@ public class BattleSceneManager : MonoBehaviour
         BattleLogic.OnObstacleSpawned += SpawnObstacleVisual;
         BattleLogic.OnObstacleDestroyed += DestroyObstacleVisual;
         
-
         // 전투 시작
         BattleLogic.Init(BattleData);
         OnBattleBegin?.Invoke(BattleLogic);

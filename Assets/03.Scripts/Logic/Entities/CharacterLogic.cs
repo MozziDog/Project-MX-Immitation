@@ -91,7 +91,7 @@ namespace Logic
         public CharacterDamageEvent OnCharacterTakeDamage;
         public Action OnDie;
 
-        public void Init(BattleLogic battle, CharacterData charData, CharacterStatData statData)
+        public CharacterLogic(BattleLogic battle, CharacterData charData, CharacterStatData statData)
         {
             _battleLogic = battle;
             _bt = BuildBehaviorTree();
@@ -115,8 +115,7 @@ namespace Logic
             _curAmmo = _maxAmmo;
             
             // 네비게이션 에이전트 초기화
-            _navAgent = new NavAgent();
-            _navAgent.Init(battle.NavigationSystem);
+            _navAgent = new NavAgent(battle.NavigationSystem);
 
             // 스킬 등록
             exSkill = charData.skills[0];
@@ -273,50 +272,17 @@ namespace Logic
             // 적 위치 파악
             Position2 enemyPosition = _currentTarget.Position;
 
-            // BattleSceneManager에 보관된 Obstacle들 중에
-            // 1. 사거리 * 0.88 이내이면서
-            // 2. 그 중에 가장 나와 가까운 것을 선정
-            ObstacleLogic targetObstacle = null;
-            float targetObstacleDistance = float.MaxValue;
-            foreach (var ob in _battleLogic.ObstaclesLogic)
-            {
-                // 엄폐물이 이미 점유중인 경우 더 고려할 필요 없음
-                if (ob.isOccupied) continue;
-
-                // 엄폐물 앞뒤로 있는 CoveringPoint 중에 나와 가까운 쪽을 선택
-                Position2 coveringPoint;
-                if (Position2.Distance(this.Position, ob.CoveringPoint[0])
-                    < Position2.Distance(this.Position, ob.CoveringPoint[1]))
-                {
-                    coveringPoint = ob.CoveringPoint[0];
-                }
-                else
-                {
-                    coveringPoint = ob.CoveringPoint[1];
-                }
-
-                float obstacleToEnemy = (enemyPosition - coveringPoint).magnitude;
-                if (obstacleToEnemy > _attackRange * PositioningAttackRangeRatio)
-                {
-                    continue;
-                }
-
-                float characterToObstacle = Position2.Distance(coveringPoint, Position);
-                if (characterToObstacle < targetObstacleDistance)
-                {
-                    targetObstacle = ob;
-                    destination = coveringPoint;
-                    targetObstacleDistance = characterToObstacle;
-                }
-            }
 
             // 적당한 obstacle이 있을 경우 그곳을 목적지로 설정
-            _destObstacle = targetObstacle;
-            if (_destObstacle != null)
+            if (TryGetNearbyCoveringPoint(enemyPosition, out var targetObstacle, out var nearbyCoveringPoint))
             {
+                _destObstacle = targetObstacle;
+                destination = nearbyCoveringPoint;
+
                 LogicDebug.Log("엄폐물로 위치 설정");
                 _moveDest = destination;
             }
+            
             // 없을 경우, 적 위치를 목적지로 설정
             else
             {
@@ -324,6 +290,42 @@ namespace Logic
             }
 
             return BehaviorResult.Success;
+        }
+
+        // BattleSceneManager에 보관된 Obstacle들 중에
+        // 1. 사거리 * 0.88 이내이면서
+        // 2. 그 중에 가장 나와 가까운 것을 선정
+        private bool TryGetNearbyCoveringPoint(Position2 enemyPosition, 
+                                            out ObstacleLogic targetObstacle, 
+                                            out Position2 coveringPos)
+        {
+            targetObstacle = null;
+            coveringPos = Position2.zero; 
+            float targetObstacleDistance = float.MaxValue;
+            foreach (var ob in _battleLogic.ObstaclesLogic)
+            {
+                // 엄폐물이 이미 점유중인 경우 더 고려할 필요 없음
+                if (ob.isOccupied) 
+                    continue;
+
+                // 엄폐물 앞뒤로 있는 CoveringPoint 중에 나와 가까운 쪽을 선택
+                Position2 pos = ob.GetNearCoveringPoint(this.Position);
+
+                // 엄폐한 상태에서 적을 공격할 수 있는지 체크
+                float obstacleToEnemy = (enemyPosition - pos).magnitude;
+                if (obstacleToEnemy > _attackRange * PositioningAttackRangeRatio)
+                    continue;
+                
+                float characterToObstacle = Position2.Distance(pos, Position);
+                if (characterToObstacle >= targetObstacleDistance) 
+                    continue;
+                
+                targetObstacle = ob;
+                coveringPos = pos;
+                targetObstacleDistance = characterToObstacle;
+            }
+
+            return targetObstacle != null;
         }
 
         BehaviorResult MoveStart()

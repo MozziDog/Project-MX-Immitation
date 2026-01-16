@@ -83,8 +83,7 @@ namespace Logic
             }
             
             // Pathfinder 초기화
-            NavigationSystem = new NavigationSystem();
-            NavigationSystem.Init(10, 40, ObstaclesLogic);
+            NavigationSystem = new NavigationSystem(10, 40, ObstaclesLogic);
             
             // battleData에 기록된 캐릭터들을 스폰
             // 아군
@@ -233,8 +232,7 @@ namespace Logic
         public CharacterLogic SpawnCharacter(CharacterData characterData, 
                                     CharacterStatData characterStat, Position2 spawnPos)
         {
-            CharacterLogic newCharacter = new CharacterLogic();
-            newCharacter.Init(this, characterData, characterStat);
+            CharacterLogic newCharacter = new CharacterLogic(this, characterData, characterStat);
             newCharacter.SetPosition(spawnPos);
 
             CharactersLogic.Add(newCharacter);
@@ -245,8 +243,7 @@ namespace Logic
         public CharacterLogic SpawnEnemy(CharacterData enemyData, 
                                     CharacterStatData enemyStat, Position2 spawnPos)
         {
-            CharacterLogic newEnemy = new CharacterLogic();
-            newEnemy.Init(this, enemyData, enemyStat);
+            CharacterLogic newEnemy = new CharacterLogic(this, enemyData, enemyStat);
             newEnemy.SetPosition(spawnPos);
             
             EnemiesLogic.Add(newEnemy);
@@ -257,11 +254,9 @@ namespace Logic
         public ObstacleLogic SpawnObstacle(ObstacleData obstacleData, 
                                     Position2 position, float rotationDeg)
         {
-            ObstacleLogic newObstacle = new ObstacleLogic();
+            ObstacleLogic newObstacle = new ObstacleLogic(obstacleData, position, rotationDeg);
             
-            newObstacle.Init(obstacleData, position, rotationDeg);
             ObstaclesLogic.Add(newObstacle);
-            
             OnObstacleSpawned?.Invoke(newObstacle);
             return newObstacle;
         }

@@ -1992,7 +1992,7 @@ MonoBehaviour:
       Length: 1
     ObstaclePosition:
     - x: 1
-      y: 12
+      y: 14
     ObstacleRotation:
     - 0
   CharacterViewDatabase: {fileID: 11400000, guid: 272b3fa63853d8d43a0f58bd4df3abe2, type: 2}

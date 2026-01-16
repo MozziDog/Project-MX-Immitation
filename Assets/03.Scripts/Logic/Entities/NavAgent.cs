@@ -13,10 +13,8 @@ namespace Logic
         private bool _isOnNavLink;
 
         public bool IsOnNavLink => _isOnNavLink;
-
         
-        // Start is called before the first frame update
-        public void Init(NavigationSystem navi)
+        public NavAgent(NavigationSystem navi)
         {
             _navigation = navi;
             _isNavLinkStart = new ();

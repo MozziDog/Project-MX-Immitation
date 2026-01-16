@@ -9,7 +9,7 @@ namespace Logic.Pathfind
         private NavMesh _navMesh;
         public NavMesh NavMesh => _navMesh;
         
-        public void Init(float fieldWidth, float fieldLength, List<ObstacleLogic> obstacles)
+        public NavigationSystem(float fieldWidth, float fieldLength, List<ObstacleLogic> obstacles)
         {
             _navMesh = new NavMesh();
             _navMesh.AddSurface(CalculateField(fieldWidth, fieldLength));
