@@ -2001,13 +2001,8 @@ MonoBehaviour:
   BulletPrefab: {fileID: 8269066620727423549, guid: c052015df06085948ab20a7c1c549d6c, type: 3}
   _logicTickPerSecond: 30
   CharacterVisuals: []
-  EnemyVisuals:
-  - {fileID: 0}
-  - {fileID: 0}
-  ObstacleVisuals:
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
+  EnemyVisuals: []
+  ObstacleVisuals: []
   BulletVisuals: []
 --- !u!4 &1568502162
 Transform:

@@ -94,7 +94,7 @@ public class BattleSceneManager : MonoBehaviour
         enemyVisualComponent.CharacterLogic = newEnemy;
         EnemyVisuals.Add(enemyVisualComponent);
         
-        OnCharacterVisualSpawn?.Invoke(enemyVisualComponent);
+        OnEnemyVisualSpawn?.Invoke(enemyVisualComponent);
     }
 
     private void DestroyEnemyVisual(CharacterLogic deadEnemy)
@@ -160,7 +160,6 @@ public class BattleSceneManager : MonoBehaviour
         {
             OnBattleEnd(BattleLogic);
         }
-        yield break;
     }
 
     private Vector3 Position2ToVector3(Position2 logicPosition)

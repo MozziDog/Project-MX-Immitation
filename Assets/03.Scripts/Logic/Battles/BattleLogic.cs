@@ -233,14 +233,11 @@ namespace Logic
         public CharacterLogic SpawnCharacter(CharacterData characterData, 
                                     CharacterStatData characterStat, Position2 spawnPos)
         {
-            // 캐릭터(로직) 생성
             CharacterLogic newCharacter = new CharacterLogic();
-
-            // 나머지 초기화 진행
             newCharacter.Init(this, characterData, characterStat);
             newCharacter.SetPosition(spawnPos);
-            CharactersLogic.Add(newCharacter);
 
+            CharactersLogic.Add(newCharacter);
             OnAllySpawn?.Invoke(newCharacter);
             return newCharacter;
         }
@@ -248,14 +245,11 @@ namespace Logic
         public CharacterLogic SpawnEnemy(CharacterData enemyData, 
                                     CharacterStatData enemyStat, Position2 spawnPos)
         {
-            // 캐릭터(로직) 생성
             CharacterLogic newEnemy = new CharacterLogic();
-
-            // 나머지 초기화 진행
             newEnemy.Init(this, enemyData, enemyStat);
             newEnemy.SetPosition(spawnPos);
+            
             EnemiesLogic.Add(newEnemy);
-
             OnEnemySpawn?.Invoke(newEnemy);
             return newEnemy;
         }
