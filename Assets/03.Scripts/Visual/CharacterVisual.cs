@@ -48,16 +48,20 @@ public class CharacterVisual : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        transform.position = new Vector3(CharacterLogic.Position.x, 0, CharacterLogic.Position.y);
-
+        var targetPosition = ToVector3(CharacterLogic.Position);
+        
         if (CharacterLogic.IsMoving)
         {
-            Vector3 positionCurrentFrame = transform.position;
-            // (현재 위치 + 이동방향) 바라보기
-            // 이동방향은 지난 프레임과의 변위로 계산
-            transform.LookAt(2 * positionCurrentFrame - _positionBeforeFrame);
+            Vector3 positionCurrentFrame = targetPosition;
+            // 이동 방향 바라보기
+            transform.LookAt(targetPosition);
             _positionBeforeFrame = positionCurrentFrame;
         }
+        
+        // 부드러운 이동을 위한 좌표 보간
+        Vector3 velocity = targetPosition - _positionBeforeFrame;
+        transform.position = Vector3.SmoothDamp(transform.position, targetPosition, ref velocity, 0.02f);
+
     }
 
     void LookAtEnemy()
@@ -117,5 +121,10 @@ public class CharacterVisual : MonoBehaviour
             Gizmos.color = Color.red;
             Gizmos.DrawSphere(new Vector3(CharacterLogic.Position.x, 0, CharacterLogic.Position.y), 0.1f);
         }
+    }
+
+    private Vector3 ToVector3(Position2 pos)
+    {
+        return new Vector3(pos.x, 0, pos.y);
     }
 }
