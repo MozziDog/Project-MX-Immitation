@@ -10,9 +10,9 @@ public class BattleSceneManager : MonoBehaviour
     public BattleData BattleData;
     public BattleLogic BattleLogic;
     public CharacterPrefabDatabase CharacterViewDatabase;
-    public GameObject EnemyPrefab;
-    public GameObject BulletPrefab;
-    public GameObject PathFinderPrefab;
+    public CharacterVisual EnemyPrefab;
+    public ObstacleVisual ObstaclePrefab;
+    public BulletVisual BulletPrefab;
 
     [Title("전투 씬 상태")]
     [SerializeField] int _logicTickPerSecond = 30;
@@ -35,9 +35,12 @@ public class BattleSceneManager : MonoBehaviour
     public delegate void BulletVisualEvent(BulletVisual visual);
     public BulletVisualEvent OnBulletVisualSpawn;
     public BulletVisualEvent OnBulletVisualDestroy;
+    public delegate void ObstacleVisualEvent(ObstacleVisual visual);
+    public ObstacleVisualEvent OnObstacleVisualSpawn;
+    public ObstacleVisualEvent OnObstacleVisualDestroy;
 
     // Start is called before the first frame update
-    void Start()
+    private void Start()
     {
         BattleLogic = new BattleLogic();
 
@@ -48,48 +51,43 @@ public class BattleSceneManager : MonoBehaviour
         BattleLogic.OnEnemyDie += DestroyEnemyVisual;
         BattleLogic.OnBulletSpawned += SpawnBulletVisual;
         BattleLogic.OnBulletExpired += DestroyBulletVisual;
+        BattleLogic.OnObstacleSpawned += SpawnObstacleVisual;
+        BattleLogic.OnObstacleDestroyed += DestroyObstacleVisual;
         
 
         // 전투 시작
         BattleLogic.Init(BattleData);
-        if(OnBattleBegin != null)
-        {
-            OnBattleBegin(BattleLogic);
-        }
+        OnBattleBegin?.Invoke(BattleLogic);
         StartCoroutine(GameCoroutine(BattleData));
     }
 
-    void SpawnCharacterVisual(CharacterLogic newCharacter)
+    private void SpawnCharacterVisual(CharacterLogic newCharacter)
     {
         // 캐릭터(비주얼) 생성
-        GameObject characterVisualObject = Instantiate(CharacterViewDatabase.CharacterViews[newCharacter.Name]);
-        CharacterVisual characterVisualComponent = characterVisualObject.GetComponent<CharacterVisual>();
+        var visual = Instantiate(CharacterViewDatabase.CharacterViews[newCharacter.Name]);
 
         // Visual 초기화 진행
-        characterVisualObject.transform.position = Position2ToVector3(newCharacter.Position);
-        characterVisualComponent.CharacterLogic = newCharacter;
-        CharacterVisuals.Add(characterVisualComponent);
+        visual.transform.position = Position2ToVector3(newCharacter.Position);
+        visual.CharacterLogic = newCharacter;
+        CharacterVisuals.Add(visual);
         
-        OnCharacterVisualSpawn?.Invoke(characterVisualComponent);
+        OnCharacterVisualSpawn?.Invoke(visual);
     }
 
-    void DestroyCharacterVisual(CharacterLogic deadCharacter)
+    private void DestroyCharacterVisual(CharacterLogic deadCharacter)
     {
         // 대상 CharacterVisual 찾기
-        CharacterVisual deadCharacterVisual = CharacterVisuals.Find((ch) => { return ch.CharacterLogic == deadCharacter; });
+        var visual = CharacterVisuals.Find((ch) => { return ch.CharacterLogic == deadCharacter; });
 
-        if(OnCharacterVisualDestroy != null)
-        {
-            OnCharacterVisualDestroy(deadCharacterVisual);
-        }
-        Destroy(deadCharacterVisual.gameObject);
+        OnCharacterVisualDestroy?.Invoke(visual);
+        Destroy(visual.gameObject);
     }
 
-    void SpawnEnemyVisual(CharacterLogic newEnemy)
+    private void SpawnEnemyVisual(CharacterLogic newEnemy)
     {
         // 적(비주얼) 생성
-        GameObject enemyVisualObject = Instantiate(EnemyPrefab);
-        CharacterVisual enemyVisualComponent = enemyVisualObject.GetComponent<CharacterVisual>();
+        var enemyVisualObject = Instantiate(EnemyPrefab);
+        var enemyVisualComponent = enemyVisualObject.GetComponent<CharacterVisual>();
 
         // 최소한의 초기화만 진행
         enemyVisualObject.transform.position = Position2ToVector3(newEnemy.Position);
@@ -99,43 +97,57 @@ public class BattleSceneManager : MonoBehaviour
         OnCharacterVisualSpawn?.Invoke(enemyVisualComponent);
     }
 
-    void DestroyEnemyVisual(CharacterLogic deadEnemy)
+    private void DestroyEnemyVisual(CharacterLogic deadEnemy)
     {
         // 대상 CharacterVisual 찾기
-        CharacterVisual deadEnemyVisual = EnemyVisuals.Find((ch) => { return ch.CharacterLogic == deadEnemy; });
+        var visual = EnemyVisuals.Find((ch) => { return ch.CharacterLogic == deadEnemy; });
 
-        if(OnEnemyVisualDestroy != null)
-        {
-            OnEnemyVisualDestroy(deadEnemyVisual);
-        }
-        Destroy(deadEnemyVisual.gameObject);
+        OnEnemyVisualDestroy?.Invoke(visual);
+        Destroy(visual.gameObject);
     }
 
-    void SpawnBulletVisual(BulletLogic newBullet)
+    private void SpawnBulletVisual(BulletLogic newBullet)
     {
         // 새 총알 오브젝트를 생성하고 Bullet 로직과 연결
-        GameObject bulletObject = Instantiate(BulletPrefab);
-        BulletVisual bulletVisual = bulletObject.GetComponent<BulletVisual>();
-        bulletVisual.BulletLogic = newBullet;
-        BulletVisuals.Add(bulletVisual);
-
-        if(OnBulletVisualSpawn != null)
-        {
-            OnBulletVisualSpawn(bulletVisual);
-        }
+        var bulletObject = Instantiate(BulletPrefab);
+        var visual = bulletObject.GetComponent<BulletVisual>();
+        visual.BulletLogic = newBullet;
+        BulletVisuals.Add(visual);
+        
+        OnBulletVisualSpawn?.Invoke(visual);
     }
 
-    void DestroyBulletVisual(BulletLogic expiredBullet)
+    private void DestroyBulletVisual(BulletLogic expiredBullet)
     {
         // 대응하는 bulletVisual 찾기
-        BulletVisual expiredBulletVisual = BulletVisuals.Find((bu) => { return bu.BulletLogic == expiredBullet; });
-        if(OnBulletVisualDestroy != null)
-        {
-            OnBulletVisualDestroy(expiredBulletVisual);
-        }
+        var visual = BulletVisuals.Find(
+                            (bu) => { return bu.BulletLogic == expiredBullet; });
+        
+        OnBulletVisualDestroy?.Invoke(visual);
+        Destroy(visual.gameObject);
     }
 
-    protected IEnumerator GameCoroutine(BattleData battleData)
+    private void SpawnObstacleVisual(ObstacleLogic newObstacle)
+    {
+        var visual = Instantiate(ObstaclePrefab);
+        visual.ObstacleLogic = newObstacle;
+        visual.transform.position = Position2ToVector3(newObstacle.Position);
+        visual.transform.localScale = Position2ToVector3(newObstacle.Scale) + Vector3.up; // (x, 1, y)
+        visual.transform.rotation = Quaternion.Euler(0, 0, -newObstacle.Rotation);  // Unity 왼손 좌표계 고려
+        ObstacleVisuals.Add(visual);
+        
+        OnObstacleVisualSpawn?.Invoke(visual);
+    }
+
+    private void DestroyObstacleVisual(ObstacleLogic destroyedObstacle)
+    {
+        var visual = ObstacleVisuals.Find(
+                        ob => { return ob.ObstacleLogic == destroyedObstacle; });
+        OnObstacleVisualDestroy?.Invoke(visual);
+        Destroy(visual.gameObject);
+    }
+
+    private IEnumerator GameCoroutine(BattleData battleData)
     {
         // 게임 루프 진행
         while(BattleLogic.BattleState == BattleSceneState.InBattle)
@@ -151,7 +163,7 @@ public class BattleSceneManager : MonoBehaviour
         yield break;
     }
 
-    Vector3 Position2ToVector3(Position2 logicPosition)
+    private Vector3 Position2ToVector3(Position2 logicPosition)
     {
         return new Vector3(logicPosition.x, 0, logicPosition.y);
     }

@@ -62,6 +62,9 @@ namespace Logic
         public delegate void BulletInstacneEvent(BulletLogic bulletLogic);
         public BulletInstacneEvent OnBulletSpawned;
         public BulletInstacneEvent OnBulletExpired;
+        public delegate void ObstacleInstacneEvent(ObstacleLogic obstacleLogic);
+        public ObstacleInstacneEvent OnObstacleSpawned;
+        public ObstacleInstacneEvent OnObstacleDestroyed;
         
         // 길찾기 담당
         public NavigationSystem NavigationSystem;
@@ -238,10 +241,7 @@ namespace Logic
             newCharacter.SetPosition(spawnPos);
             CharactersLogic.Add(newCharacter);
 
-            if(OnAllySpawn != null)
-            {
-                OnAllySpawn(newCharacter);
-            }
+            OnAllySpawn?.Invoke(newCharacter);
             return newCharacter;
         }
 
@@ -256,10 +256,7 @@ namespace Logic
             newEnemy.SetPosition(spawnPos);
             EnemiesLogic.Add(newEnemy);
 
-            if(OnEnemySpawn != null)
-            {
-                OnEnemySpawn(newEnemy);
-            }
+            OnEnemySpawn?.Invoke(newEnemy);
             return newEnemy;
         }
 
@@ -271,6 +268,7 @@ namespace Logic
             newObstacle.Init(obstacleData, position, rotationDeg);
             ObstaclesLogic.Add(newObstacle);
             
+            OnObstacleSpawned?.Invoke(newObstacle);
             return newObstacle;
         }
 
@@ -281,10 +279,8 @@ namespace Logic
         {
             BulletsActive.Add(bullet);
             bullet.Init(this);
-            if(OnBulletSpawned != null)
-            {
-                OnBulletSpawned(bullet);
-            }
+            
+            OnBulletSpawned?.Invoke(bullet);
         }
 
         /// <summary>

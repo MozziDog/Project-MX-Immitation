@@ -14,10 +14,14 @@ namespace Logic
         private List<Position2> _vertices;
         private Position2[] _coveringPoint;
         private Position2 _position;
+        private Position2 _scale;
+        private float _rotation;
 
         public List<Position2> Vertices => _vertices;
         public Position2[] CoveringPoint => _coveringPoint;
         public Position2 Position => _position;
+        public Position2 Scale => _scale;
+        public float Rotation => _rotation;
         bool _isOccupied = false;
 
         // 이벤트
@@ -40,6 +44,7 @@ namespace Logic
         public void Init(ObstacleData data, Position2 position, float rotationDeg)
         {
             _position = position;
+            _scale = new Position2(data.Width, data.Length);
             CalculateVertices(position, data.Width, data.Length, rotationDeg);
         }
         

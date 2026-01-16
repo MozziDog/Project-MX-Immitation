@@ -6,5 +6,5 @@ using Sirenix.OdinInspector;
 [CreateAssetMenu()]
 public class CharacterPrefabDatabase : SerializedScriptableObject
 {
-    public Dictionary<string, GameObject> CharacterViews;
+    public Dictionary<string, CharacterVisual> CharacterViews;
 }
