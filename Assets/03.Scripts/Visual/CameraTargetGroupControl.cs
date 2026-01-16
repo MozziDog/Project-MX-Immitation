@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Unity.Cinemachine;
-using Logic;
+using Visual;
 
 public class CameraTargetGroupControl : MonoBehaviour
 {

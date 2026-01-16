@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 
 public class AttackEffectiveness
@@ -9,7 +8,7 @@ public class AttackEffectiveness
     public static readonly float Weak = 2.00f;
 
     static readonly Dictionary<(AttackType, ArmorType), float> effectivenessTable
-    = new Dictionary<(AttackType, ArmorType), float>()
+    = new ()
     {
         {(AttackType.Normal, ArmorType.Normal), Normal },
         {(AttackType.Normal, ArmorType.Light), Normal},

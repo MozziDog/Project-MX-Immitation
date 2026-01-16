@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerMove : MonoBehaviour
+public class NavTestPlayerMove : MonoBehaviour
 {
-    public NavigationManager Nav;
+    public NavigationTest Nav;
     public float MoveSpeed = 1f;
     public Vector2 Target;
     

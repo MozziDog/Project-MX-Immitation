@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Logic;
+using Visual;
 
 public class BattleSceneManager : MonoBehaviour
 {
@@ -66,7 +67,7 @@ public class BattleSceneManager : MonoBehaviour
         var visual = Instantiate(CharacterViewDatabase.CharacterViews[newCharacter.Name]);
 
         // Visual 초기화 진행
-        visual.transform.position = Position2ToVector3(newCharacter.Position);
+        visual.transform.position = Util.ToVector3(newCharacter.Position);
         visual.Logic = newCharacter;
         CharacterVisuals.Add(visual);
         
@@ -89,7 +90,7 @@ public class BattleSceneManager : MonoBehaviour
         var enemyVisualComponent = enemyVisualObject.GetComponent<CharacterVisual>();
 
         // 최소한의 초기화만 진행
-        enemyVisualObject.transform.position = Position2ToVector3(newEnemy.Position);
+        enemyVisualObject.transform.position = Util.ToVector3(newEnemy.Position);
         enemyVisualComponent.Logic = newEnemy;
         EnemyVisuals.Add(enemyVisualComponent);
         
@@ -130,8 +131,8 @@ public class BattleSceneManager : MonoBehaviour
     {
         var visual = Instantiate(ObstaclePrefab);
         visual.ObstacleLogic = newObstacle;
-        visual.transform.position = Position2ToVector3(newObstacle.Position);
-        visual.transform.localScale = Position2ToVector3(newObstacle.Scale) + Vector3.up; // (x, 1, y)
+        visual.transform.position = Util.ToVector3(newObstacle.Position);
+        visual.transform.localScale = Util.ToVector3(newObstacle.Scale) + Vector3.up; // (x, 1, y)
         visual.transform.rotation = Quaternion.Euler(0, 0, -newObstacle.Rotation);  // Unity 왼손 좌표계 고려
         ObstacleVisuals.Add(visual);
         
@@ -169,11 +170,6 @@ public class BattleSceneManager : MonoBehaviour
                 Debug.LogError($"잘못된 전투 결과: {BattleLogic.BattleState}");
                 break;
         }
-    }
-
-    private Vector3 Position2ToVector3(Position2 logicPosition)
-    {
-        return new Vector3(logicPosition.x, 0, logicPosition.y);
     }
 
     public void OnClickSkillCard(int index)

@@ -5,7 +5,7 @@ using UnityEngine;
 using Navigation.Net;
 using TriangleNet.Geometry;
 
-public class NavigationManager : MonoBehaviour
+public class NavigationTest : MonoBehaviour
 {
     [SerializeField] private bool drawGizmos = false;
     
