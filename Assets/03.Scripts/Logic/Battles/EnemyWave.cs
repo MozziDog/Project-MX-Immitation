@@ -1,33 +1,23 @@
-using System.Collections;
+using System;
 using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
 
 namespace Logic
 {
+    [Serializable]
     public class EnemyWave
     {
-        List<KeyValuePair<CharacterLogic, Position2>> elements = new List<KeyValuePair<CharacterLogic, Position2>>();
-
+        public List<CharacterData> Enemies = new();
+        public List<CharacterStatData> EnemyStats = new();
+        public List<Position2> EnemyPositions  = new();
+        
         public int Count
         {
-            get { return elements.Count; }
+            get { return Enemies.Count; }
         }
 
-        public KeyValuePair<CharacterLogic, Position2> this[int i]
+        public (CharacterData, CharacterStatData, Position2) this[int i]
         {
-            get { return elements[i]; }
-            set { elements[i] = value; }
-        }
-
-        public void Add(KeyValuePair<CharacterLogic, Position2> newCharacter)
-        {
-            elements.Add(newCharacter);
-        }
-
-        public void Remove(CharacterLogic deadCharacter)
-        {
-            elements.RemoveAll(x => x.Key == deadCharacter);
+            get { return (Enemies[i], EnemyStats[i], EnemyPositions[i]); }
         }
     }
 }

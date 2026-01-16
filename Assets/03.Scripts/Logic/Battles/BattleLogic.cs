@@ -24,6 +24,7 @@ namespace Logic
         public BattleSceneState BattleState;
         public int LeftAllyStriker;
         public int LeftEnemyStriker;
+        public int CurWave;
 
         // 관리중인 엔티티들(로직)
         public CharacterGroup CharactersLogic = new CharacterGroup();      // 아군
@@ -76,7 +77,7 @@ namespace Logic
             }
             
             // Pathfinder 초기화
-            NavigationSystem = new NavigationSystem(10, 40, ObstaclesLogic);
+            NavigationSystem = new NavigationSystem(10, 100, ObstaclesLogic);
             
             // battleData에 기록된 캐릭터들을 스폰
             // 아군
@@ -87,14 +88,18 @@ namespace Logic
                     SpawnPoint[i] 
                 );
 
-            // 적군
-            LeftEnemyStriker = battleData.Enemies.Count;
-            for(int i=0; i<battleData.Enemies.Count; i++)
+            // 첫번째 웨이브 스폰
+            CurWave = 0;
+            var firstWave = battleData.EnemyWaves[0];
+            for(int i=0; i<firstWave.Count; i++)
                 SpawnEnemy( 
-                    battleData.Enemies[i], 
-                    battleData.EnemyStats[i], 
-                    battleData.EnemiesPosition[i]
+                    firstWave.Enemies[i], 
+                    firstWave.EnemyStats[i], 
+                    firstWave.EnemyPositions[i]
                 );
+            // 남은 적 수 계산
+            foreach(var wave in battleData.EnemyWaves)
+                LeftEnemyStriker += wave.Count;
 
             // 코스트 회복량 산정
             foreach(var character in CharactersLogic)
@@ -331,6 +336,18 @@ namespace Logic
             LeftEnemyStriker--;
             if (LeftEnemyStriker <= 0)
                 BattleState = BattleSceneState.win;
+            else
+            {
+                // 다음 웨이브 스폰
+                CurWave++;
+                var nextWave = BattleData.EnemyWaves[CurWave];
+                for(int i=0; i<nextWave.Count; i++)
+                    SpawnEnemy( 
+                        nextWave.Enemies[i], 
+                        nextWave.EnemyStats[i], 
+                        nextWave.EnemyPositions[i]
+                    );
+            }
         }
     }
 }

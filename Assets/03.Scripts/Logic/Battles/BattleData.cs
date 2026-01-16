@@ -14,9 +14,7 @@ public class BattleData
     /// <summary>
     /// 적군 캐릭터 정보
     /// </summary>
-    public List<CharacterData> Enemies = new();
-    public List<CharacterStatData> EnemyStats = new();
-    public List<Position2> EnemiesPosition  = new();
+    public List<EnemyWave> EnemyWaves = new();
 
     /// <summary>
     /// 장애물 정보

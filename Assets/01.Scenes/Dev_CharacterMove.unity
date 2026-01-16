@@ -401,7 +401,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: 1, z: -0, w: 0}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 10}
+  m_LocalScale: {x: 1, y: 1, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1978,13 +1978,21 @@ MonoBehaviour:
     CharacterStats:
     - {fileID: 11400000, guid: 2a5c8a7d1c2dea84d87db0a302581295, type: 2}
     - {fileID: 11400000, guid: 0f08f87bdf7f90a45973a4d10dba3983, type: 2}
-    Enemies:
-    - {fileID: 11400000, guid: 94c38104aa68c644c9dad1a02788c49d, type: 2}
-    EnemyStats:
-    - {fileID: 11400000, guid: 2a5c8a7d1c2dea84d87db0a302581295, type: 2}
-    EnemiesPosition:
-    - x: 3
-      y: 20
+    EnemyWaves:
+    - Enemies:
+      - {fileID: 11400000, guid: 94c38104aa68c644c9dad1a02788c49d, type: 2}
+      EnemyStats:
+      - {fileID: 11400000, guid: 2a5c8a7d1c2dea84d87db0a302581295, type: 2}
+      EnemyPositions:
+      - x: 3
+        y: 20
+    - Enemies:
+      - {fileID: 11400000, guid: aa1662e18c4216342ab169716724ad97, type: 2}
+      EnemyStats:
+      - {fileID: 11400000, guid: 0f08f87bdf7f90a45973a4d10dba3983, type: 2}
+      EnemyPositions:
+      - x: 2
+        y: 34
     Obstacles:
     - Id: 0
       MaxHp: 0
@@ -2051,7 +2059,7 @@ Transform:
   m_GameObject: {fileID: 1627516183}
   serializedVersion: 2
   m_LocalRotation: {x: -0.32212284, y: 0.40719357, z: -0.15609948, w: -0.8402757}
-  m_LocalPosition: {x: 8.7535515, y: 8.172176, z: 1.2426262}
+  m_LocalPosition: {x: 8.751619, y: 8.172176, z: 1.2401791}
   m_LocalScale: {x: 1.0000004, y: 1, z: 1.0000002}
   m_ConstrainProportionsScale: 0
   m_Children: []
