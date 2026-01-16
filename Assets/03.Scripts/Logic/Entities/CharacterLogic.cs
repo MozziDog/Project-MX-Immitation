@@ -34,8 +34,10 @@ namespace Logic
         private ObstacleLogic _destObstacle;
         private float _attackRange;
         private float _distToEnemy = 10f;
-        private bool _isObstacleJumping = false;
-        private bool _isShouldering = false;
+        private bool _isMoving;
+        private bool _isDoingSomeAction;
+        private bool _isObstacleJumping;
+        private bool _isShouldering;
 
         // 전투 관련
         private CharacterLogic _currentTarget;
@@ -67,14 +69,16 @@ namespace Logic
         static readonly int UnshoulderDurationFrame = 15;
         static readonly float ObstacleJumpSpeedMultiplier = 0.8f;       // 장애물 뛰어넘을 때 이동속도 배율
 
-        // 프로퍼티
-        public Position2 Position { get { return _position; } }
-        public bool IsMoving { get; private set; }
-        public bool IsDoingSomeAction { get; private set; }
-        public CharacterLogic CurrentTarget { get { return _currentTarget; } }
-        public int CostRegen { get { return _costRegen; } }
-        public int ExSkillCost { get { return _exSkillCost; } }
-        public bool CanUseExSkill { get { return !_isObstacleJumping; } }
+        // 노출 프로퍼티
+        public Position2 Position => _position;
+        public bool IsMoving => _isMoving;
+        public bool IsDoingSomeAction => _isDoingSomeAction;
+        public CharacterLogic CurrentTarget => _currentTarget;
+        public float AttackRange => _attackRange;
+        public Position2 MoveDest => _moveDest;
+        public int CostRegen => _costRegen;
+        public int ExSkillCost => _exSkillCost;
+        public bool CanUseExSkill => !_isObstacleJumping;
 
         // 이벤트
         public Action OnAttack;
@@ -329,7 +333,7 @@ namespace Logic
             if(_distToEnemy < _attackRange)
             {
                 _curActionFrame = 0;
-                IsMoving = false;
+                _isMoving = false;
                 return BehaviorResult.Success;
             }
 
@@ -337,7 +341,7 @@ namespace Logic
             if (_curActionFrame >= MoveStartFrame)
             {
                 _curActionFrame = 0;
-                IsMoving = true;
+                _isMoving = true;
                 // 점유중인 엄폐물이 있었다면 점유 해제
                 if (_coveringObstacle != null)
                 {
@@ -448,7 +452,7 @@ namespace Logic
             if (_curActionFrame >= MoveEndFrame)
             {
                 _curActionFrame = 0;
-                IsMoving = false;
+                _isMoving = false;
                 LogicDebug.Log("MoveEnd");
                 return BehaviorResult.Success;
             }
@@ -543,11 +547,11 @@ namespace Logic
         BehaviorResult Reload()
         {
             _curActionFrame++;
-            IsDoingSomeAction = true;
+            _isDoingSomeAction = true;
             if (_curActionFrame >= ReloadDurationFrame)
             {
                 _curActionFrame = 0;
-                IsDoingSomeAction = false;
+                _isDoingSomeAction = false;
                 _curAmmo = 15;
                 OnReload();
                 return BehaviorResult.Success;
@@ -567,11 +571,11 @@ namespace Logic
                 }
             }
             _curActionFrame++;
-            IsDoingSomeAction = true;
+            _isDoingSomeAction = true;
             if(_curActionFrame >= ShoulderDurationFrame)
             {
                 _curActionFrame = 0;
-                IsDoingSomeAction = false;
+                _isDoingSomeAction = false;
                 _isShouldering = true;
                 return BehaviorResult.Success;
             }
@@ -591,11 +595,11 @@ namespace Logic
                 }
             }
             _curActionFrame++;
-            IsDoingSomeAction = true;
+            _isDoingSomeAction = true;
             if (_curActionFrame >= UnshoulderDurationFrame)
             {
                 _curActionFrame = 0;
-                IsDoingSomeAction = false;
+                _isDoingSomeAction = false;
                 _isShouldering = false;
                 return BehaviorResult.Success;
             }
@@ -624,7 +628,7 @@ namespace Logic
             }
 
             _exSkillFrame++;
-            IsDoingSomeAction = true;
+            _isDoingSomeAction = true;
 
             // 선딜레이 끝난 타이밍: 스킬 시전
             if (_exSkillFrame == exSkill.StartupFrame)
@@ -649,7 +653,7 @@ namespace Logic
             {
                 _exSkillFrame = 0;
                 _curActionFrame = 0;
-                IsDoingSomeAction = false;
+                _isDoingSomeAction = false;
                 _exSkillTrigger = false;
                 _currentTarget = null;       // 아군을 타겟팅한 경우 등을 고려, 스킬 종료 시 대상 재선정 필요
 
@@ -681,7 +685,7 @@ namespace Logic
             }
 
             _curActionFrame++;
-            IsDoingSomeAction = true;
+            _isDoingSomeAction = true;
 
             // 선딜 끝났을 때
             if (_curActionFrame == normalSkill.StartupFrame)
@@ -706,7 +710,7 @@ namespace Logic
             if (_curActionFrame >= normalSkill.StartupFrame + normalSkill.RecoveryFrame)
             {
                 _curActionFrame = 0;
-                IsDoingSomeAction = false;
+                _isDoingSomeAction = false;
                 LogicDebug.Log($"{Name}: 기본 스킬 사용 종료");
                 return BehaviorResult.Success;
             }

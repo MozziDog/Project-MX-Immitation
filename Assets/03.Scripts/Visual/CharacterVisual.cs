@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using Sirenix.OdinInspector;
 using Logic;
 // using DamageNumbersPro;
 
@@ -9,48 +6,31 @@ using Logic;
 // TODO: Replace DamageNumbersPro
 public class CharacterVisual : MonoBehaviour
 {
-    public CharacterLogic CharacterLogic;
-
-    // 적 허수아비용 강제 초기화
-    [SerializeField] bool _forceInitializeWithUnity;
-    [ShowIf("_forceInitializeWithUnity")]
-    [SerializeField] Position2 _initPosition;
-    [ShowIf("_forceInitializeWithUnity")]
-    [SerializeField] int _initHP;
-
+    public CharacterLogic Logic;
+    
     // [SerializeField] DamageNumber _damageNumberPrefab;
     Vector3 _positionBeforeFrame;
-
-    void Awake()
-    {
-        // 디버그용: CharacterLogic의 일부 필드를 CharacterVisual의 것으로 덮어쓰기
-        if (_forceInitializeWithUnity)
-        {
-            CharacterLogic.SetPosition(_initPosition);
-            CharacterLogic.SetHP(_initHP);
-        }
-    }
-
+    
     // Start is called before the first frame update
     void Start()
     {
         _positionBeforeFrame = transform.position;
-        CharacterLogic.OnAttack += LookAtEnemy;
-        CharacterLogic.OnUseNormalSkill += LookAtEnemy;
-        CharacterLogic.OnUseExSkill += LookAtEnemy;
-        CharacterLogic.OnReload += DisplayReloadMessage;
-        CharacterLogic.OnShoulderWeapon += DisplayShoulderMessage;
-        CharacterLogic.OnUnshoulderWeapon += DisplayUnshoulderMessage;
-        CharacterLogic.OnCharacterTakeDamage += DisplayDamageNumber;
-        CharacterLogic.OnDie += DestroyVisual;
+        Logic.OnAttack += LookAtEnemy;
+        Logic.OnUseNormalSkill += LookAtEnemy;
+        Logic.OnUseExSkill += LookAtEnemy;
+        Logic.OnReload += OnReloaded;
+        Logic.OnShoulderWeapon += OnShoulder;
+        Logic.OnUnshoulderWeapon += OnUnshoulder;
+        Logic.OnCharacterTakeDamage += DisplayDamageNumber;
+        Logic.OnDie += DestroyVisual;
     }
 
     // Update is called once per frame
     void Update()
     {
-        var targetPosition = ToVector3(CharacterLogic.Position);
+        var targetPosition = ToVector3(Logic.Position);
         
-        if (CharacterLogic.IsMoving)
+        if (Logic.IsMoving)
         {
             Vector3 positionCurrentFrame = targetPosition;
             // 이동 방향 바라보기
@@ -66,7 +46,7 @@ public class CharacterVisual : MonoBehaviour
 
     void LookAtEnemy()
     {
-        CharacterLogic enemy = CharacterLogic.CurrentTarget;
+        CharacterLogic enemy = Logic.CurrentTarget;
         if(enemy == null)
         {
             return;
@@ -76,17 +56,17 @@ public class CharacterVisual : MonoBehaviour
         transform.LookAt(targetWorldPosition);
     }
 
-    void DisplayReloadMessage()
+    void OnReloaded()
     {
         // _damageNumberPrefab.Spawn(transform.position, "Reloaded");
     }
 
-    void DisplayShoulderMessage()
+    void OnShoulder()
     {
         // _damageNumberPrefab.Spawn(transform.position, "Shouldered Weapon");
     }
 
-    void DisplayUnshoulderMessage()
+    void OnUnshoulder()
     {
         // _damageNumberPrefab.Spawn(transform.position, "Unshouldered Weapon");
     }
@@ -109,17 +89,17 @@ public class CharacterVisual : MonoBehaviour
     {
         // 사거리 원
         Gizmos.color = Color.yellow;
-        // Gizmos.DrawWireSphere(transform.position, attackRange);
+        Gizmos.DrawWireSphere(transform.position, Logic.AttackRange);
 
         // 이동 목표 위치
         Gizmos.color = Color.green;
-        // Gizmos.DrawSphere(CharacterLogic.moveDest, 0.1f);
+        Gizmos.DrawSphere(ToVector3(Logic.MoveDest), 0.1f);
 
         // 공격 대상
-        if (CharacterLogic.CurrentTarget != null)
+        if (Logic.CurrentTarget != null)
         {
             Gizmos.color = Color.red;
-            Gizmos.DrawSphere(new Vector3(CharacterLogic.Position.x, 0, CharacterLogic.Position.y), 0.1f);
+            Gizmos.DrawSphere(new Vector3(Logic.Position.x, 0, Logic.Position.y), 0.1f);
         }
     }
 

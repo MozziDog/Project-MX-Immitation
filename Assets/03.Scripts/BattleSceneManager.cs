@@ -67,7 +67,7 @@ public class BattleSceneManager : MonoBehaviour
 
         // Visual 초기화 진행
         visual.transform.position = Position2ToVector3(newCharacter.Position);
-        visual.CharacterLogic = newCharacter;
+        visual.Logic = newCharacter;
         CharacterVisuals.Add(visual);
         
         OnCharacterVisualSpawn?.Invoke(visual);
@@ -76,7 +76,7 @@ public class BattleSceneManager : MonoBehaviour
     private void DestroyCharacterVisual(CharacterLogic deadCharacter)
     {
         // 대상 CharacterVisual 찾기
-        var visual = CharacterVisuals.Find((ch) => { return ch.CharacterLogic == deadCharacter; });
+        var visual = CharacterVisuals.Find((ch) => { return ch.Logic == deadCharacter; });
 
         OnCharacterVisualDestroy?.Invoke(visual);
         Destroy(visual.gameObject);
@@ -90,7 +90,7 @@ public class BattleSceneManager : MonoBehaviour
 
         // 최소한의 초기화만 진행
         enemyVisualObject.transform.position = Position2ToVector3(newEnemy.Position);
-        enemyVisualComponent.CharacterLogic = newEnemy;
+        enemyVisualComponent.Logic = newEnemy;
         EnemyVisuals.Add(enemyVisualComponent);
         
         OnEnemyVisualSpawn?.Invoke(enemyVisualComponent);
@@ -99,7 +99,7 @@ public class BattleSceneManager : MonoBehaviour
     private void DestroyEnemyVisual(CharacterLogic deadEnemy)
     {
         // 대상 CharacterVisual 찾기
-        var visual = EnemyVisuals.Find((ch) => { return ch.CharacterLogic == deadEnemy; });
+        var visual = EnemyVisuals.Find((ch) => { return ch.Logic == deadEnemy; });
 
         OnEnemyVisualDestroy?.Invoke(visual);
         Destroy(visual.gameObject);
