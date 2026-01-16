@@ -274,7 +274,7 @@ namespace Logic
 
 
             // 적당한 obstacle이 있을 경우 그곳을 목적지로 설정
-            if (TryGetNearbyCoveringPoint(enemyPosition, out var targetObstacle, out var nearbyCoveringPoint))
+            if (TryGetNearbyCoveringPoint(_position, enemyPosition, out var targetObstacle, out var nearbyCoveringPoint))
             {
                 _destObstacle = targetObstacle;
                 destination = nearbyCoveringPoint;
@@ -295,9 +295,10 @@ namespace Logic
         // BattleSceneManager에 보관된 Obstacle들 중에
         // 1. 사거리 * 0.88 이내이면서
         // 2. 그 중에 가장 나와 가까운 것을 선정
-        private bool TryGetNearbyCoveringPoint(Position2 enemyPosition, 
-                                            out ObstacleLogic targetObstacle, 
-                                            out Position2 coveringPos)
+        private bool TryGetNearbyCoveringPoint( Position2 characterPosition,
+                                                Position2 enemyPosition, 
+                                                out ObstacleLogic targetObstacle, 
+                                                out Position2 coveringPos)
         {
             targetObstacle = null;
             coveringPos = Position2.zero; 
@@ -306,6 +307,9 @@ namespace Logic
             {
                 // 엄폐물이 이미 점유중인 경우 더 고려할 필요 없음
                 if (ob.isOccupied) 
+                    continue;
+                // 엄폐물이 자신과 적사이가 아닌 경우에도 스킵
+                if (ob.Position.y < characterPosition.y || ob.Position.y > enemyPosition.y)
                     continue;
 
                 // 엄폐물 앞뒤로 있는 CoveringPoint 중에 나와 가까운 쪽을 선택
@@ -366,6 +370,7 @@ namespace Logic
                     {
                         LogicDebug.Log("엄폐물 선점당함. 경로 재탐색");
                         _destObstacle = null;
+                        _coveringObstacle = null;
                         return BehaviorResult.Failure;
                     }
                     if (Position2.Distance(Position, _moveDest) < 0.1f)
@@ -414,13 +419,16 @@ namespace Logic
                 _isObstacleJumping = false;
                 _occupyinngObstacle.isOccupied = false;
                 _jumpEndPos = null;
+                _navAgent.FollowPath(_position, 0); // NavAgent 기반 이동으로 복귀
             }
         }
 
         private void StartObstacleJumping()
         {
             _isObstacleJumping = true;
-            // 뛰어넘는 중에는 다른 캐릭터가 엄폐물 뒤에서 기다리는 상황을 방지하기 위해 장애물 점유로 판정
+            // 엄폐 해제
+            _coveringObstacle = null;
+            // 뛰어넘는 중에는 다른 캐릭터가 엄폐물 뒤에서 기다리는 상황을 방지하기 위해 엄폐물 점유로 판정
             _occupyinngObstacle = FindNearbyObstacle();
             _occupyinngObstacle.isOccupied = true;
             _jumpEndPos = _occupyinngObstacle.GetFarCoveringPoint(_position);
@@ -476,33 +484,32 @@ namespace Logic
         BehaviorResult MoveToNextWave()
         {
             if (_currentTarget != null) return BehaviorResult.Success;
+            
+            // 엄폐물 뛰어넘기 시작
+            if (!_isObstacleJumping && 
+                (_navAgent.IsOnNavLink || _coveringObstacle != null))
+                StartObstacleJumping();
+
+            // 이동 속도 조절을 위해 장애물 뛰어넘기는 수동으로 진행
+            if (_isObstacleJumping)
+                DoObstacleJumping();
+            
+            // 앞에 뛰어넘을 장애물이 없다면, 단순 전방으로 이동
             else
             {
-                // 엄폐물 뛰어넘기 시작
-                if (!_isObstacleJumping && _navAgent.IsOnNavLink)
-                    StartObstacleJumping();
-
-                // 이동 속도 조절을 위해 장애물 뛰어넘기는 수동으로 진행
-                if (_isObstacleJumping)
-                    DoObstacleJumping();
-                
-                // 앞에 뛰어넘을 장애물이 없다면, 단순 전방으로 이동
+                bool isPathFounded = _navAgent.CalculatePath(_position, Position + Position2.forward * 3);
+                if (isPathFounded)
+                {
+                    _position = _navAgent.FollowPath(_position, _moveSpeed / _battleLogic.BaseLogicTickrate);
+                }
                 else
                 {
-                    bool isPathFounded = _navAgent.CalculatePath(_position, Position + Position2.forward * 3);
-                    if (isPathFounded)
-                    {
-                        _position = _navAgent.FollowPath(_position, _moveSpeed / _battleLogic.BaseLogicTickrate);
-                    }
-                    else
-                    {
-                        LogicDebug.Log("길찾기 실패, 임의로 앞으로 이동");
-                        _position += new Position2(0, _moveSpeed / _battleLogic.BaseLogicTickrate);
-                    }
+                    LogicDebug.Log("길찾기 실패, 임의로 앞으로 이동");
+                    _position += new Position2(0, _moveSpeed / _battleLogic.BaseLogicTickrate);
                 }
-
-                return BehaviorResult.Running;
             }
+
+            return BehaviorResult.Running;
         }
 
         BehaviorResult Attack()
@@ -616,7 +623,7 @@ namespace Logic
                 _attackFrame = 0;
                 _isShouldering = false;
 
-                switch (exSkill.SkillRange.ConditionType)
+                switch (exSkill.TargetAreaSize.TargetType)
                 {
                     case SkillTargetType.Enemy:
                         // currentTarget을 그대로 사용
@@ -665,7 +672,19 @@ namespace Logic
 
         bool CheckCanUseNormalSkill()
         {
-            return _normalSkillCondition.CanUseSkill();
+            if (!_normalSkillCondition.CanUseSkill())
+                return false;
+            switch (normalSkill.TargetAreaSize.TargetType)
+            {
+                case SkillTargetType.Self:
+                    return true;
+                case SkillTargetType.Enemy:
+                    return _distToEnemy <= normalSkill.Range;
+                default:
+                    LogicDebug.LogError("해당 스킬 옵션은 구현되지 않음!");
+                    return false;
+                    break;
+            }
         }
 
         BehaviorResult UseNormalSkill()
@@ -673,7 +692,7 @@ namespace Logic
             // 일반스킬 첫 프레임
             if (_curActionFrame == 0)
             {
-                switch (normalSkill.SkillRange.ConditionType)
+                switch (normalSkill.TargetAreaSize.TargetType)
                 {
                     case SkillTargetType.Enemy:
                         // currentTarget을 그대로 사용

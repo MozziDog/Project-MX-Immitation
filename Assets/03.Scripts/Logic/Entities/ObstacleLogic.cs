@@ -11,6 +11,8 @@ namespace Logic
     [Serializable]
     public class ObstacleLogic
     {
+        private const float PADDING = 0.5f;
+        
         private List<Position2> _vertices;
         private Position2[] _coveringPoint;
         private Position2 _position;
@@ -45,13 +47,14 @@ namespace Logic
         {
             _position = position;
             _scale = new Position2(data.Width, data.Length);
+            _rotation = rotationDeg;
             CalculateVertices(position, data.Width, data.Length, rotationDeg);
         }
         
         public void CalculateVertices(Position2 position, float width, float length, float rotationDeg)
         {
-            float halfWidth = width * 0.5f;
-            float halfHeight = length * 0.5f;
+            float halfWidth = width * 0.5f + PADDING;
+            float halfHeight = length * 0.5f + PADDING;
 
             float rad = rotationDeg * MathF.PI / 180;
             float cos = MathF.Cos(rad);
@@ -77,8 +80,8 @@ namespace Logic
 
             var linkLocal = new Position2[]
             {
-                new Position2(0, -halfHeight - 1.0f),
-                new Position2(0, halfHeight + 1.0f)
+                new Position2(0, -halfHeight),
+                new Position2(0, halfHeight)
             };
             
             var linkWorld = new Position2[2];

@@ -47,7 +47,7 @@ namespace Logic
                 else
                 {
                     curPos = Position2.MoveTowards(curPos, _path[i], stepLength);
-                    _isOnNavLink = _isNavLinkStart[i];
+                    _isOnNavLink = _isNavLinkStart[i] && (curPos - _path[i]).sqrMagnitude <= stepLength;
                     break;
                 }
             }

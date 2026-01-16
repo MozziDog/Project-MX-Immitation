@@ -133,7 +133,7 @@ public class BattleSceneManager : MonoBehaviour
         visual.ObstacleLogic = newObstacle;
         visual.transform.position = Util.ToVector3(newObstacle.Position);
         visual.transform.localScale = Util.ToVector3(newObstacle.Scale) + Vector3.up; // (x, 1, y)
-        visual.transform.rotation = Quaternion.Euler(0, 0, -newObstacle.Rotation);  // Unity 왼손 좌표계 고려
+        visual.transform.rotation = Quaternion.Euler(0, -newObstacle.Rotation, 0);  // Unity 왼손 좌표계 고려
         ObstacleVisuals.Add(visual);
         
         OnObstacleVisualSpawn?.Invoke(visual);
