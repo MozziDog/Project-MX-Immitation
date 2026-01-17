@@ -1,13 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
-using Sirenix.OdinInspector;
 using UnityEngine;
 using Logic;
 using Visual;
 
 public class BattleSceneManager : MonoBehaviour
 {
-    [Title("전투 초기화 정보")]
+    [Header("전투 초기화 정보")]
     public BattleData BattleData;
     public BattleLogic BattleLogic;
     public CharacterPrefabDatabase CharacterViewDatabase;
@@ -15,10 +14,10 @@ public class BattleSceneManager : MonoBehaviour
     public ObstacleVisual ObstaclePrefab;
     public BulletVisual BulletPrefab;
 
-    [Title("전투 씬 상태")]
+    [Header("전투 씬 상태")]
     [SerializeField] int _logicTickPerSecond = 30;
 
-    [Title("관리중인 비주얼 엔티티들")]
+    [Header("관리중인 비주얼 엔티티들")]
     public List<CharacterVisual> CharacterVisuals = new List<CharacterVisual>();
     public List<CharacterVisual> EnemyVisuals = new List<CharacterVisual>();
     public List<ObstacleVisual> ObstacleVisuals = new List<ObstacleVisual>();

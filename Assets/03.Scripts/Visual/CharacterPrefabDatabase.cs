@@ -1,10 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
-using Sirenix.OdinInspector;
 using Visual;
 
 [CreateAssetMenu()]
-public class CharacterPrefabDatabase : SerializedScriptableObject
+public class CharacterPrefabDatabase : ScriptableObject
 {
-    public Dictionary<string, CharacterVisual> CharacterViews;
+    public SerializableDictionary<string, CharacterVisual> CharacterViews;
 }
